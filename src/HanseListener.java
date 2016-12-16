@@ -4,6 +4,7 @@ import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
+import org.ros.node.Node;
 import org.ros.node.topic.Subscriber;
 import std_msgs.Float32;
 import hanse_msgs.Ampere;
@@ -15,7 +16,6 @@ import sensor_msgs.Imu;
 import sensor_msgs.Temperature;
 import sensor_msgs.FluidPressure;
 import sensor_msgs.Image;
-
 
 public class HanseListener extends AbstractNodeMain {
 	/*private Float32 accelerometer;
@@ -106,6 +106,12 @@ public class HanseListener extends AbstractNodeMain {
 	@Override
 	public GraphName getDefaultNodeName() {
 		return GraphName.of("ROSJavaIC/listener");
+	}
+
+	
+	@Override
+	public void onShutdownComplete(Node node){
+		System.exit(0);
 	}
 	
 	@Override
