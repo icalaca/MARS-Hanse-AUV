@@ -4,6 +4,10 @@ import javafx.application.Application;
 import javafx.scene.control.Label;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.image.WritableImage;
+import javafx.scene.image.PixelWriter;
 import javafx.application.Platform;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
@@ -15,6 +19,8 @@ import geometry_msgs.PointStamped;
 import sensor_msgs.Imu;
 import sensor_msgs.Temperature;
 import sensor_msgs.FluidPressure;
+import org.jboss.netty.buffer.ChannelBuffer;
+
 
 public class GUI extends Application implements Observer{
 	private Connector con;
@@ -50,6 +56,10 @@ public class GUI extends Application implements Observer{
 	private Label positionXLbl = new Label("X:");
 	private Label positionYLbl = new Label("Y:");
 	private Label positionZLbl = new Label("Z:");
+	private static int cameraWidth = 640; //MARS default dimension 
+	private static int cameraHeight = 480; //MARS default dimension 
+	private WritableImage fCameraImage = new WritableImage(cameraWidth,cameraHeight);
+	private WritableImage bCameraImage = new WritableImage(cameraWidth,cameraHeight);
 	
 	@Override
 	public void start(Stage primaryStage){
@@ -116,9 +126,39 @@ public class GUI extends Application implements Observer{
 		grid.add(positionYLbl, 1, 17);
 		grid.add(positionZLbl, 1, 18);
 		
+		ImageView fImgView = new ImageView(fCameraImage);
+		ImageView bImgView = new ImageView(bCameraImage);
+		
+		Stage fCameraStage = new Stage();
+		GridPane fImgGrid = new GridPane();
+		fImgGrid.add(fImgView, 1, 1);
+		fCameraStage.setTitle("Front Camera");
+		fCameraStage.setScene(new Scene(fImgGrid, cameraWidth, cameraHeight));
+		
+		Stage bCameraStage = new Stage();
+		GridPane bImgGrid = new GridPane();
+		bImgGrid.add(bImgView, 1, 1);
+		bCameraStage.setTitle("Bottom Camera");
+		bCameraStage.setScene(new Scene(bImgGrid, cameraWidth, cameraHeight));
+		
+		
 		Scene scene = new Scene(grid,500,480);
 		primaryStage.setScene(scene);
 		primaryStage.show();
+		fCameraStage.show();
+		bCameraStage.show();
+	}
+	
+	private void writeCamImage(ChannelBuffer data, int step, PixelWriter pxWriter, int camWidth, int camHeight){
+		for(int x = 0;x < camWidth;x++){
+			for(int y = 0;y < camHeight;y++){
+				byte fr = data.getByte((int) (y * step + 3 * x));
+				byte fg = data.getByte((int) (y * step + 3 * x + 1));
+				byte fb = data.getByte((int) (y * step + 3 * x + 2));
+				//BGR8 - MARS default format
+				pxWriter.setColor((camWidth-x-1), y, Color.rgb(fb & 0xFF, fg & 0xFF, fr & 0xFF));
+			}
+		}
 	}
 	
 	@Override
@@ -166,12 +206,12 @@ public class GUI extends Application implements Observer{
 			Platform.runLater(()-> accelerometerLbl.setText("Accelerometer:"+Float.toString(accelerometer)));
 			break;
 		case Flow:
-			double x = ((Vector3Stamped)obj).getVector().getX();
-			double y = ((Vector3Stamped)obj).getVector().getY();
-			double z = ((Vector3Stamped)obj).getVector().getZ();
-			Platform.runLater(()-> flowXLbl.setText("X:"+Double.toString(x)));
-			Platform.runLater(()-> flowYLbl.setText("Y:"+Double.toString(y)));
-			Platform.runLater(()-> flowZLbl.setText("Z:"+Double.toString(z)));
+			double fX = ((Vector3Stamped)obj).getVector().getX();
+			double fY = ((Vector3Stamped)obj).getVector().getY();
+			double fZ = ((Vector3Stamped)obj).getVector().getZ();
+			Platform.runLater(()-> flowXLbl.setText("X:"+Double.toString(fX)));
+			Platform.runLater(()-> flowYLbl.setText("Y:"+Double.toString(fY)));
+			Platform.runLater(()-> flowZLbl.setText("Z:"+Double.toString(fZ)));
 			break;
 		case Pollution:
 			double pollution = ((Vector3Stamped)obj).getVector().getY();
@@ -217,10 +257,16 @@ public class GUI extends Application implements Observer{
 			//TODO
 			break;
 		case FrontCamera:
-			//TODO
+			sensor_msgs.Image frontImg = (sensor_msgs.Image)obj;
+			PixelWriter fpxWriter = fCameraImage.getPixelWriter();
+			ChannelBuffer fdata = frontImg.getData();
+			writeCamImage(fdata, frontImg.getStep(), fpxWriter, cameraWidth, cameraHeight);
 			break;
 		case BottomCamera:
-			//TODO
+			sensor_msgs.Image bottomImg = (sensor_msgs.Image)obj;
+			PixelWriter bpxWriter = bCameraImage.getPixelWriter();
+			ChannelBuffer bdata = bottomImg.getData();
+			writeCamImage(bdata, bottomImg.getStep(), bpxWriter, cameraWidth, cameraHeight);
 		}
 	}
 	
