@@ -2,17 +2,21 @@ import java.util.Observer;
 import java.util.Observable;
 import javafx.application.Application;
 import javafx.scene.control.Label;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
+import javafx.scene.transform.*;
 import javafx.scene.image.WritableImage;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.PixelWriter;
 import javafx.application.Platform;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import std_msgs.Float32;
 import hanse_msgs.Ampere;
+import hanse_msgs.ScanningSonar;
 import geometry_msgs.Vector3Stamped;
 import geometry_msgs.PoseStamped;
 import geometry_msgs.PointStamped;
@@ -56,93 +60,118 @@ public class GUI extends Application implements Observer{
 	private Label positionXLbl = new Label("X:");
 	private Label positionYLbl = new Label("Y:");
 	private Label positionZLbl = new Label("Z:");
-	private static int cameraWidth = 640; //MARS default dimension 
-	private static int cameraHeight = 480; //MARS default dimension 
+	private static int cameraWidth = 640; //MARS default camera width 
+	private static int cameraHeight = 480; //MARS default camera height 
 	private WritableImage fCameraImage = new WritableImage(cameraWidth,cameraHeight);
 	private WritableImage bCameraImage = new WritableImage(cameraWidth,cameraHeight);
+	private Canvas canvas = new Canvas(395, 395);
+	private GraphicsContext canvasGC = canvas.getGraphicsContext2D();
 	
 	@Override
 	public void start(Stage primaryStage){
+		primaryStage.setTitle("MARS Hanse Controller");
 		con = new Connector();
 		HanseListener listInst = con.getListenerInstance();
 		listInst.addNotifyObs(this);
 		
-		primaryStage.setTitle("MARS Hanse Controller");
 		GridPane grid = new GridPane();
-		grid.setVgap(1);
 		grid.setHgap(50);
-		grid.setPadding(new Insets(6, 6, 6, 6));
-		grid.add(accelerometerLbl, 0, 0);
-		grid.add(gyroscopeLbl, 0, 1);
-		grid.add(pingerLbl, 0, 2);
-		grid.add(amperemeterLbl, 0, 3);
-		grid.add(pollutionLbl, 0, 4);
-		grid.add(temperatureLbl, 0, 6);
-		grid.add(tempVarianceLbl, 0, 7);
-		grid.add(depthLbl, 0, 9);
-		grid.add(depthVarianceLbl, 0, 10);
 		
+		VBox sensorsBox = new VBox();
+		sensorsBox.setSpacing(4);
+		sensorsBox.getChildren().add(accelerometerLbl);
+		sensorsBox.getChildren().add(gyroscopeLbl);
+		sensorsBox.getChildren().add(pingerLbl);
+		sensorsBox.getChildren().add(amperemeterLbl);
+		sensorsBox.getChildren().add(pollutionLbl);
+		sensorsBox.getChildren().add(temperatureLbl);
+		sensorsBox.getChildren().add(tempVarianceLbl);
+		sensorsBox.getChildren().add(depthLbl);
+		sensorsBox.getChildren().add(depthVarianceLbl);
+		
+		VBox flowBox = new VBox();
 		Label flowLbl = new Label("Flow");
-		grid.add(flowLbl, 0, 12);
-		grid.add(flowXLbl, 0, 13);
-		grid.add(flowYLbl, 0, 14);
-		grid.add(flowZLbl, 0, 15);
+		flowBox.getChildren().add(flowLbl);
+		flowBox.getChildren().add(flowXLbl);
+		flowBox.getChildren().add(flowYLbl);
+		flowBox.getChildren().add(flowZLbl);
+		sensorsBox.getChildren().add(flowBox);
 		
+		VBox sensorsBox2 = new VBox();
+		sensorsBox2.setSpacing(4);
+		VBox imuBox = new VBox();
 		Label imuLbl = new Label("Imu");
 		Label velLbl = new Label("Angular velocity");
 		Label accLbl = new Label("Linear acceleration");
 		Label orientationLbl = new Label("Orientation");
-		grid.add(imuLbl, 1, 0);
-		grid.add(velLbl, 1, 1);
-		grid.add(angVelXLbl, 1, 2);
-		grid.add(angVelYLbl, 1, 3);
-		grid.add(angVelZLbl, 1, 4);
-		grid.add(accLbl, 1, 5);
-		grid.add(linearAccXLbl, 1, 6);
-		grid.add(linearAccYLbl, 1, 7);
-		grid.add(linearAccZLbl, 1, 8);
-		grid.add(orientationLbl, 1, 9);
-		grid.add(orientationXLbl, 1, 10);
-		grid.add(orientationYLbl, 1, 11);
-		grid.add(orientationZLbl, 1, 12);
-		grid.add(orientationWLbl, 1, 13);
-		
+		imuBox.getChildren().add(imuLbl);
+		imuBox.getChildren().add(velLbl);
+		imuBox.getChildren().add(angVelXLbl);
+		imuBox.getChildren().add(angVelYLbl);
+		imuBox.getChildren().add(angVelZLbl);
+		imuBox.getChildren().add(accLbl);
+		imuBox.getChildren().add(linearAccXLbl);
+		imuBox.getChildren().add(linearAccYLbl);
+		imuBox.getChildren().add(linearAccZLbl);
+		imuBox.getChildren().add(orientationLbl);
+		imuBox.getChildren().add(orientationXLbl);
+		imuBox.getChildren().add(orientationYLbl);
+		imuBox.getChildren().add(orientationZLbl);
+		imuBox.getChildren().add(orientationWLbl);
+		sensorsBox2.getChildren().add(imuBox);
+
+		VBox poseBox = new VBox();
 		Label poseLbl = new Label("Pose meter");
 		Label pPositionLbl = new Label("Position");
 		Label pOrientationLbl = new Label("Orientation");
-		grid.add(poseLbl, 0, 17);
-		grid.add(pPositionLbl, 0, 18);
-		grid.add(pPositionXLbl, 0, 19);
-		grid.add(pPositionYLbl, 0, 20);
-		grid.add(pPositionZLbl, 0, 21);
-		grid.add(pOrientationLbl, 0, 22);
-		grid.add(pOrientationXLbl, 0, 23);
-		grid.add(pOrientationYLbl, 0, 24);
-		grid.add(pOrientationZLbl, 0, 25);
-		grid.add(pOrientationWLbl, 0, 26);
+		poseBox.getChildren().add(poseLbl);
+		poseBox.getChildren().add(pPositionLbl);
+		poseBox.getChildren().add(pPositionXLbl);
+		poseBox.getChildren().add(pPositionYLbl);
+		poseBox.getChildren().add(pPositionZLbl);
+		poseBox.getChildren().add(pOrientationLbl);
+		poseBox.getChildren().add(pOrientationXLbl);
+		poseBox.getChildren().add(pOrientationYLbl);
+		poseBox.getChildren().add(pOrientationZLbl);
+		poseBox.getChildren().add(pOrientationWLbl);
+		sensorsBox.getChildren().add(poseBox);
+		
+		VBox positionBox = new VBox();
 		Label positionmLbl = new Label("Position meter");
-		grid.add(positionmLbl, 1, 15);
-		grid.add(positionXLbl, 1, 16);
-		grid.add(positionYLbl, 1, 17);
-		grid.add(positionZLbl, 1, 18);
+		positionBox.getChildren().add(positionmLbl);
+		positionBox.getChildren().add(positionXLbl);
+		positionBox.getChildren().add(positionYLbl);
+		positionBox.getChildren().add(positionZLbl);
+		sensorsBox2.getChildren().add(positionBox);
+		
+		Label sonarLbl = new Label("Sonar:");
+		VBox sonarBox = new VBox();
+		sonarBox.getChildren().add(sonarLbl);
+		sonarBox.getChildren().add(canvas);
+		
+		grid.add(sensorsBox, 0, 0);
+		grid.add(sensorsBox2, 1, 0);
+		grid.add(sonarBox, 3, 0);
 		
 		ImageView fImgView = new ImageView(fCameraImage);
 		ImageView bImgView = new ImageView(bCameraImage);
 		
 		Stage fCameraStage = new Stage();
-		GridPane fImgGrid = new GridPane();
-		fImgGrid.add(fImgView, 1, 1);
+		VBox fImgBox = new VBox();
+		fImgBox.getChildren().add(fImgView);
 		fCameraStage.setTitle("Front Camera");
-		fCameraStage.setScene(new Scene(fImgGrid, cameraWidth, cameraHeight));
+		fCameraStage.setScene(new Scene(fImgBox, cameraWidth, cameraHeight));
+		
+		canvasGC.setFill(Color.BLACK);
+		canvasGC.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 		
 		Stage bCameraStage = new Stage();
-		GridPane bImgGrid = new GridPane();
-		bImgGrid.add(bImgView, 1, 1);
+		VBox bImgBox = new VBox();
+		bImgBox.getChildren().add(bImgView);
 		bCameraStage.setTitle("Bottom Camera");
-		bCameraStage.setScene(new Scene(bImgGrid, cameraWidth, cameraHeight));
+		bCameraStage.setScene(new Scene(bImgBox, cameraWidth, cameraHeight));
 		
-		
-		Scene scene = new Scene(grid,500,480);
+		Scene scene = new Scene(grid,970,410);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 		fCameraStage.show();
@@ -152,12 +181,35 @@ public class GUI extends Application implements Observer{
 	private void writeCamImage(ChannelBuffer data, int step, PixelWriter pxWriter, int camWidth, int camHeight){
 		for(int x = 0;x < camWidth;x++){
 			for(int y = 0;y < camHeight;y++){
-				byte fr = data.getByte((int) (y * step + 3 * x));
-				byte fg = data.getByte((int) (y * step + 3 * x + 1));
-				byte fb = data.getByte((int) (y * step + 3 * x + 2));
+				byte fr = data.getByte((int) (y*step+3*x));
+				byte fg = data.getByte((int) (y*step+3*x+1));
+				byte fb = data.getByte((int) (y*step+3*x+2));
 				//BGR8 - MARS default format
-				pxWriter.setColor((camWidth-x-1), y, Color.rgb(fb & 0xFF, fg & 0xFF, fr & 0xFF));
+				pxWriter.setColor((camWidth-x-1), y, Color.rgb(fb&0xFF, fg&0xFF, fr&0xFF));
 			}
+		}
+	}
+	
+	private void drawSonar(ChannelBuffer data, double radAngle){
+		double cX = canvas.getWidth()/2;
+		double cY = canvas.getHeight()/2;
+		float resolution = 0.1f;
+		int uByte = 0;
+		Affine affine = new Affine();
+		affine.appendRotation(Math.toDegrees(radAngle),cX,cY);
+		canvasGC.setTransform(affine);
+		for(int i = 0;i < data.capacity();i++){
+			uByte = data.getByte(i) & 0xFF;
+			if(uByte > 0)
+				canvasGC.setStroke(Color.rgb(0, uByte, 0));
+			else canvasGC.setStroke(Color.BLACK);
+			float pixelsWidth = resolution*(float)i ;
+			if (pixelsWidth >= 1) {
+				canvasGC.setLineWidth(Math.round(pixelsWidth));
+			}else{
+				canvasGC.setLineWidth(1);
+			}
+			canvasGC.strokeLine(cX, cY-i, cX, cY-i-1);
 		}
 	}
 	
@@ -254,7 +306,9 @@ public class GUI extends Application implements Observer{
 			Platform.runLater(()-> depthVarianceLbl.setText("Variance:"+Double.toString(dvariance)));
 			break;
 		case Sonar:
-			//TODO
+			ScanningSonar sonar = ((ScanningSonar)obj);
+			ChannelBuffer sData = sonar.getEchoData();
+			drawSonar(sData, sonar.getHeadPosition());
 			break;
 		case FrontCamera:
 			sensor_msgs.Image frontImg = (sensor_msgs.Image)obj;
