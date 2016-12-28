@@ -1,6 +1,7 @@
 import java.util.Observer;
 import java.util.Observable;
 import javafx.application.Application;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
@@ -11,6 +12,8 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.PixelWriter;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -71,6 +74,7 @@ public class GUI extends Application implements Observer{
 	public void start(Stage primaryStage){
 		primaryStage.setTitle("MARS Hanse Controller");
 		con = new Connector();
+		HanseTalker talkInst = con.getTalkerInstance();
 		HanseListener listInst = con.getListenerInstance();
 		listInst.addNotifyObs(this);
 		
@@ -143,6 +147,61 @@ public class GUI extends Application implements Observer{
 		positionBox.getChildren().add(positionYLbl);
 		positionBox.getChildren().add(positionZLbl);
 		sensorsBox2.getChildren().add(positionBox);
+		
+		Button frontButton = new Button("/\\");
+		frontButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveForward();
+			}
+		});
+		Button backButton = new Button("\\/");
+		backButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveBackward();
+			}
+		});
+		Button rightButton = new Button(">");
+		rightButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveRight();
+			}
+		});
+		Button leftButton = new Button("<");
+		leftButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveLeft();
+			}
+		});
+		Button upButton = new Button("/\\");
+		upButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveUp();
+			}
+		});
+		Button downButton = new Button("\\/");
+		downButton.setOnAction(new EventHandler<ActionEvent>(){
+			@Override
+			public void handle(ActionEvent e){
+				talkInst.moveDown();
+			}
+		});
+		
+		GridPane controlGrid = new GridPane();
+		controlGrid.setHgap(2);
+		Label controlLbl = new Label("Hanse Control:");
+		controlGrid.add(leftButton, 0, 1);
+		controlGrid.add(frontButton, 1, 0);
+		controlGrid.add(rightButton, 2, 1);
+		controlGrid.add(backButton, 1, 2);
+		controlGrid.add(upButton, 7, 0);
+		controlGrid.add(downButton, 7, 2);
+		sensorsBox2.getChildren().add(controlLbl);
+		sensorsBox2.getChildren().add(controlGrid);
 		
 		Label sonarLbl = new Label("Sonar:");
 		VBox sonarBox = new VBox();
