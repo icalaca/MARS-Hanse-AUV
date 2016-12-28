@@ -10,6 +10,7 @@ import javafx.scene.control.Alert.AlertType;
 
 public class Connector{
 	private HanseListener subscriberNode = new HanseListener();
+	private HanseTalker publisherNode = new HanseTalker();
 	private NodeMainExecutor nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
 	
 	public Connector(){
@@ -36,11 +37,15 @@ public class Connector{
 		}
 		NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(ip, masteruri);
 		nodeMainExecutor.execute(subscriberNode, nodeConfiguration); 
-		//TODO:talker(publisher node)
+		nodeMainExecutor.execute(publisherNode, nodeConfiguration);
 	}
 	
 	public HanseListener getListenerInstance(){
 		return subscriberNode;
+	}
+	
+	public HanseTalker getTalkerInstance(){
+		return publisherNode;
 	}
 	
 	public void shutdown(){
